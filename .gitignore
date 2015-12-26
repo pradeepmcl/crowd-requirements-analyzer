@@ -6,7 +6,7 @@ gen/
 target/
 
 # Sensitive files
-# src/main/resources/application.properties
+src/main/resources/application.properties
 
 # Mac specific file
 .DS_Store
