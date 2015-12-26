@@ -8,7 +8,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 public class PersonalityComputer {
 
@@ -16,18 +19,36 @@ public class PersonalityComputer {
       + " from personality_questions_users where user_id = ?";
 
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
+    int phase = Integer.parseInt(args[0]);
+    
     Properties props = new Properties();
-    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties");
-        Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
-            + props.getProperty("jdbc.username") + "&password="
-            + props.getProperty("jdbc.password"))) {
-      
+    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties")) {
       props.load(inStream);
       Class.forName(props.getProperty("jdbc.driverClassName"));
 
-      Double[] traits = computePeronalityTraits(conn, 30);
-      System.out.println("E = " + traits[0] + "; A = " + traits[1] + "; C = " + traits[2]
-          + "; N = " + traits[3] + "; I = " + traits[4]);
+      try (Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
+          + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"))) {
+
+        Set<Integer> idSet = MTurkIdFilter.getMturkIds(conn, phase, true);
+        Map<Integer, Double[]> idToTraits = new HashMap<Integer, Double[]>();
+
+        System.out.println("id,E,A,C,N,I");
+        for (int id : idSet) {
+          Double[] traits = computePeronalityTraits(conn, id);
+          idToTraits.put(id, traits);
+          System.out.println(id + "," + traits[0] + "," + traits[1] + "," + traits[2] + ","
+              + traits[3] + "," + traits[4]);
+        }
+        
+        System.out.println("Distances for the first id...");
+        for (int id1 : idSet) {
+          for (int id2 : idSet) {
+            System.out.print(getPersonalityEuclideanDistance(idToTraits.get(id1),
+                idToTraits.get(id2)) + " ");
+          }
+          break; // One iteration is sufficient for testing
+        }
+      }
     }
   }
 
@@ -68,5 +89,13 @@ public class PersonalityComputer {
     }
 
     return traits;
+  }
+  
+  public static Double getPersonalityEuclideanDistance(Double[] trait1, Double[] trait2) {
+    Double squaredDistance = 0.0;
+    for (int i = 0; i < 5; i++) {
+      squaredDistance += (trait1[i] - trait2[i]) * (trait1[i] - trait2[i]);
+    }
+    return Math.sqrt(squaredDistance);
   }
 }

@@ -18,20 +18,22 @@ public class MTurkIdFilter {
   
   private static final String MTURK_ID_COMPLETE_SQL = "select id from users"
       + " where completion_code is not null and created_phase = ?";
+  
+  private static final String MTURK_ID_SQL = "select id from users where created_phase = ?";
+
 
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
     Properties props = new Properties();
-    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties");
-        Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
-            + props.getProperty("jdbc.username") + "&password="
-            + props.getProperty("jdbc.password"))) {
-
+    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties")) {
       props.load(inStream);
       Class.forName(props.getProperty("jdbc.driverClassName"));
-      
-      Set<Integer> idSet = getMturkIds(conn, 1, true);
-      System.out.println(idSet.size());
-      System.out.println(idSet);
+
+      try (Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
+          + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"))) {
+        Set<Integer> idSet = getMturkIds(conn, 1, true);
+        System.out.println(idSet.size());
+        System.out.println(idSet);
+      }
     }
   }
 
@@ -43,7 +45,7 @@ public class MTurkIdFilter {
     if (isComplete) {
       query = MTURK_ID_COMPLETE_SQL;
     } else {
-      query = MTURK_ID_COMPLETE_SQL; // TODO
+      query = MTURK_ID_SQL;
     }
     
     try (PreparedStatement prepdStmt = conn.prepareStatement(query)) {
