@@ -21,17 +21,16 @@ public class MTurkIdFilter {
 
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
     Properties props = new Properties();
-    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties");
-        Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
-            + props.getProperty("jdbc.username") + "&password="
-            + props.getProperty("jdbc.password"))) {
-
+    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties")) {
       props.load(inStream);
       Class.forName(props.getProperty("jdbc.driverClassName"));
-      
-      Set<Integer> idSet = getMturkIds(conn, 1, true);
-      System.out.println(idSet.size());
-      System.out.println(idSet);
+
+      try (Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
+          + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"))) {
+        Set<Integer> idSet = getMturkIds(conn, 1, true);
+        System.out.println(idSet.size());
+        System.out.println(idSet);
+      }
     }
   }
 
