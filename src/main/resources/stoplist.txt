@@ -1,0 +1,4 @@
+house
+home
+smart
+automatically
