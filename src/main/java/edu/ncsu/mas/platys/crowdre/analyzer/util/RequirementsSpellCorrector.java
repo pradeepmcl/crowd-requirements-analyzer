@@ -1,11 +1,11 @@
 package edu.ncsu.mas.platys.crowdre.analyzer.util;
 
 import java.io.Console;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -20,33 +20,40 @@ public class RequirementsSpellCorrector {
 
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
     Properties props = new Properties();
-    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties")) {
+    try (InputStream inStream = RequirementsSpellCorrector.class
+        .getResourceAsStream("/application.properties")) {
+      
       props.load(inStream);
       Class.forName(props.getProperty("jdbc.driverClassName"));
 
-      try (Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
-          + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"))) {
+      String updateQuery = "Update requirements set role = REPLACE(role, ?, ?) where id = ?";
+      
+      try (Connection conn = DriverManager.getConnection(
+          props.getProperty("jdbc.url") + "?user=" + props.getProperty("jdbc.username")
+              + "&password=" + props.getProperty("jdbc.password"));
+          PreparedStatement updateStmt = conn.prepareStatement(updateQuery)) {
 
         SpellChecker spellChecker = new SpellChecker();
-        
+
         Console c = System.console();
         if (c == null) {
-            System.err.println("No console.");
-            System.exit(1);
+          System.err.println("No console.");
+          System.exit(1);
         }
-        
+
+        int temp = 0;
         Map<Integer, String> roles = getReqRoles(conn);
         for (Integer reqId : roles.keySet()) {
           String srcPhrase = roles.get(reqId);
           Map<Integer, List<String>> suggestions = spellChecker.getSuggestions(srcPhrase);
-          
+
           for (Integer col : suggestions.keySet()) {
             List<String> colSuggestions = suggestions.get(col);
-            System.out.println(roles.get(reqId) + "; Error in " + col + "; Suggestions: "
-                + colSuggestions); // TODO Remove
-            
-            String srcWordPosStr = c.readLine("Enter source position (starting 0)"
-                + " or nothing to continue: ");
+            System.out.println(
+                roles.get(reqId) + "; Error in " + col + "; Suggestions: " + colSuggestions); 
+
+            String srcWordPosStr = c
+                .readLine("Enter source position (starting 0)" + " or nothing to continue: ");
             if (srcWordPosStr != null & srcWordPosStr.trim().length() > 0) {
               int srcWordPos = Integer.valueOf(srcWordPosStr);
               String srcWord;
@@ -55,7 +62,7 @@ public class RequirementsSpellCorrector {
               } else {
                 srcWord = srcPhrase.split(" ")[srcWordPos];
               }
-              
+
               String destWordPosStr = c.readLine("Enter destination position (starting 0):");
               int destWordPos = Integer.valueOf(destWordPosStr);
               String destWord;
@@ -64,10 +71,20 @@ public class RequirementsSpellCorrector {
               } else {
                 destWord = colSuggestions.get(destWordPos);
               }
-              System.out.println(srcWord + "-->" + destWord);
+              
+              updateStmt.setString(1, srcWord);
+              updateStmt.setString(2, destWord);
+              updateStmt.setInt(3, reqId);
+              System.out.println(updateStmt);
+              updateStmt.addBatch();
+              temp++;
             }
           }
+          if (temp >= 2) {
+            break; // TODO Remove
+          }
         }
+        updateStmt.executeBatch();
       }
     }
   }
