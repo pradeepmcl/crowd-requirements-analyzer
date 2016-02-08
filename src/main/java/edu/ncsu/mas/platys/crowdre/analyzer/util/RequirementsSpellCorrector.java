@@ -41,7 +41,6 @@ public class RequirementsSpellCorrector {
           System.exit(1);
         }
 
-        int temp = 0;
         Map<Integer, String> roles = getReqRoles(conn);
         for (Integer reqId : roles.keySet()) {
           String srcPhrase = roles.get(reqId);
@@ -77,11 +76,7 @@ public class RequirementsSpellCorrector {
               updateStmt.setInt(3, reqId);
               System.out.println(updateStmt);
               updateStmt.addBatch();
-              temp++;
             }
-          }
-          if (temp >= 2) {
-            break; // TODO Remove
           }
         }
         updateStmt.executeBatch();
