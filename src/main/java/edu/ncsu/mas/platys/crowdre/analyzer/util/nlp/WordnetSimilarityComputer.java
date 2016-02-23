@@ -17,7 +17,7 @@ import edu.cmu.lti.ws4j.impl.WuPalmer;
 import edu.cmu.lti.ws4j.util.WS4JConfiguration;
 import edu.washington.cs.knowitall.morpha.MorphaStemmer;
 
-public class SimilarityComputer {
+public class WordnetSimilarityComputer {
 
   private final ILexicalDatabase db = new NictWordNet();
 
@@ -27,7 +27,7 @@ public class SimilarityComputer {
 
   private final Set<String> stopWords = new HashSet<String>();
 
-  public SimilarityComputer(String stopWordsFile) throws FileNotFoundException, IOException {
+  public WordnetSimilarityComputer(String stopWordsFile) throws FileNotFoundException, IOException {
     WS4JConfiguration conf = WS4JConfiguration.getInstance();
     conf.setMFS(false);
     // conf.setStem(false);
@@ -129,7 +129,7 @@ public class SimilarityComputer {
     String s1 = "lights to dim in my house";
     String s2 = "play music to cheer my mood";
 
-    SimilarityComputer simComp = new SimilarityComputer("src/main/resources/stoplist.txt");
+    WordnetSimilarityComputer simComp = new WordnetSimilarityComputer("src/main/resources/stoplist.txt");
     System.out.println(simComp.computeSentenceSimilarity(s1, s2));
   }
 

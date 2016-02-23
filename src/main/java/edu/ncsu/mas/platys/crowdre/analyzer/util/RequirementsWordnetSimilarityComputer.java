@@ -13,9 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import edu.ncsu.mas.platys.crowdre.analyzer.util.nlp.SimilarityComputer;
+import edu.ncsu.mas.platys.crowdre.analyzer.util.nlp.WordnetSimilarityComputer;
 
-public class RequirementsSimilarityComputer {
+public class RequirementsWordnetSimilarityComputer {
   
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
     Properties props = new Properties();
@@ -27,7 +27,7 @@ public class RequirementsSimilarityComputer {
           + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"));
           PrintWriter writer = new PrintWriter("feature-similarity.csv", "UTF-8");) {
 
-        SimilarityComputer simComp = new SimilarityComputer("src/main/resources/stoplist.txt");
+        WordnetSimilarityComputer simComp = new WordnetSimilarityComputer("src/main/resources/stoplist.txt");
         Map<Integer, String> features = getReqFeatures(conn);
         for (Integer reqId1 : features.keySet()) {
           for (Integer reqId2 : features.keySet()) {
