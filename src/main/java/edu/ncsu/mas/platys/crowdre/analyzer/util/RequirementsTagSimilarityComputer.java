@@ -14,23 +14,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+
 public class RequirementsTagSimilarityComputer implements AutoCloseable {
 
   private final Properties mProps = new Properties();
 
   private final Connection mConn;
 
-  public RequirementsTagSimilarityComputer()
-      throws ClassNotFoundException, SQLException, IOException {
+  public RequirementsTagSimilarityComputer() throws ClassNotFoundException, SQLException,
+      IOException {
     try (InputStream inStream = RequirementsSpellCorrector.class
         .getResourceAsStream("/application.properties")) {
 
       mProps.load(inStream);
       Class.forName(mProps.getProperty("jdbc.driverClassName"));
 
-      mConn = DriverManager.getConnection(
-          mProps.getProperty("jdbc.url") + "?user=" + mProps.getProperty("jdbc.username")
-              + "&password=" + mProps.getProperty("jdbc.password"));
+      mConn = DriverManager.getConnection(mProps.getProperty("jdbc.url") + "?user="
+          + mProps.getProperty("jdbc.username") + "&password="
+          + mProps.getProperty("jdbc.password"));
     }
   }
 
@@ -113,9 +116,9 @@ public class RequirementsTagSimilarityComputer implements AutoCloseable {
     return simScore;
   }
 
-  public static void main(String[] args)
-      throws ClassNotFoundException, SQLException, IOException, Exception {
-
+  public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException,
+      Exception {
+    
     String domain = args[0];
     String outFilename = args[1];
 
@@ -126,13 +129,33 @@ public class RequirementsTagSimilarityComputer implements AutoCloseable {
       Map<Integer, List<String>> reqIdToTags = simComputer.getTags(domain);
       List<Integer> reqIds = new ArrayList<Integer>();
       reqIds.addAll(reqIdToTags.keySet());
+
+      Multimap<Integer, Integer> similarReqs = ArrayListMultimap.create();
+      
       for (int i = 0; i < reqIds.size(); i++) {
+        similarReqs.put(reqIds.get(i), reqIds.get(i));
         for (int j = i + 1; j < reqIds.size(); j++) {
-          writer
-              .println(reqIds.get(i) + "," + reqIds.get(j) + "," + simComputer.computeTagSimilarity(
-                  reqIdToTags.get(reqIds.get(i)), reqIdToTags.get(reqIds.get(j)), tagsToIdf));
+          Double similarity = simComputer.computeTagSimilarity(reqIdToTags.get(reqIds.get(i)),
+              reqIdToTags.get(reqIds.get(j)), tagsToIdf);
+          if (similarity > 0.0) {
+            similarReqs.put(reqIds.get(i), reqIds.get(j));
+          }
         }
       }
+      
+      List<Integer> clusteredReqIds = new ArrayList<Integer>();
+      List<List<Integer>> clusters = new ArrayList<List<Integer>>();
+      
+      for (Integer reqId : similarReqs.keys()) {
+        if (!clusteredReqIds.contains(reqId)) {
+          List<Integer> cluster = new ArrayList<Integer>();
+          cluster.addAll(similarReqs.get(reqId));
+          clusters.add(cluster);
+          clusteredReqIds.addAll(similarReqs.get(reqId));
+        }
+      }
+      
+      System.out.println(clusters);
     }
   }
 }
