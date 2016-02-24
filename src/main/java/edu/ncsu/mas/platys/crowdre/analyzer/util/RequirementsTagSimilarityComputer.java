@@ -1,8 +1,10 @@
 package edu.ncsu.mas.platys.crowdre.analyzer.util;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -10,9 +12,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
@@ -116,46 +120,80 @@ public class RequirementsTagSimilarityComputer implements AutoCloseable {
     return simScore;
   }
 
-  public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException,
-      Exception {
-    
-    String domain = args[0];
-    String outFilename = args[1];
+  public Multimap<Integer, Integer> computeTagSimilarity(String domain, String reqIdsOutFilename,
+      String similarityOutFilename)
+          throws FileNotFoundException, UnsupportedEncodingException, SQLException {
 
-    try (RequirementsTagSimilarityComputer simComputer = new RequirementsTagSimilarityComputer();
-        PrintWriter writer = new PrintWriter(outFilename, "UTF-8");) {
+    Multimap<Integer, Integer> similarReqs = ArrayListMultimap.create();
 
-      Map<String, Double> tagsToIdf = simComputer.getTagsIdf(domain);
-      Map<Integer, List<String>> reqIdToTags = simComputer.getTags(domain);
+    try (PrintWriter reqIdsWriter = new PrintWriter(reqIdsOutFilename, "UTF-8");
+        PrintWriter pdistWriter = new PrintWriter(similarityOutFilename, "UTF-8");) {
+
+      Map<String, Double> tagsToIdf = getTagsIdf(domain);
+      Map<Integer, List<String>> reqIdToTags = getTags(domain);
       List<Integer> reqIds = new ArrayList<Integer>();
       reqIds.addAll(reqIdToTags.keySet());
 
-      Multimap<Integer, Integer> similarReqs = ArrayListMultimap.create();
-      
       for (int i = 0; i < reqIds.size(); i++) {
         similarReqs.put(reqIds.get(i), reqIds.get(i));
+        reqIdsWriter.println(reqIds.get(i));
         for (int j = i + 1; j < reqIds.size(); j++) {
-          Double similarity = simComputer.computeTagSimilarity(reqIdToTags.get(reqIds.get(i)),
+          Double similarity = computeTagSimilarity(reqIdToTags.get(reqIds.get(i)),
               reqIdToTags.get(reqIds.get(j)), tagsToIdf);
+          pdistWriter.println(similarity);
           if (similarity > 0.0) {
             similarReqs.put(reqIds.get(i), reqIds.get(j));
           }
         }
       }
-      
-      List<Integer> clusteredReqIds = new ArrayList<Integer>();
-      List<List<Integer>> clusters = new ArrayList<List<Integer>>();
-      
-      for (Integer reqId : similarReqs.keys()) {
-        if (!clusteredReqIds.contains(reqId)) {
-          List<Integer> cluster = new ArrayList<Integer>();
-          cluster.addAll(similarReqs.get(reqId));
-          clusters.add(cluster);
-          clusteredReqIds.addAll(similarReqs.get(reqId));
-        }
+    }
+    return similarReqs;
+  }
+  
+  public void performNaiveClustering(Multimap<Integer, Integer> similarReqs,
+      String clustersOutFilename) throws FileNotFoundException, UnsupportedEncodingException {
+    Set<Integer> clusteredReqIds = new HashSet<Integer>();
+    List<Set<Integer>> clusters = new ArrayList<Set<Integer>>();
+
+    for (Integer reqId : similarReqs.keys()) {
+      if (!clusteredReqIds.contains(reqId)) {
+        Set<Integer> cluster = new HashSet<Integer>();
+        cluster.addAll(similarReqs.get(reqId));
+        clusters.add(cluster);
+        clusteredReqIds.addAll(similarReqs.get(reqId));
       }
+    }
+
+    System.out.println("Number of clusters: " + clusters.size() + "; Total number of requirements: "
+        + clusteredReqIds.size());
+    
+    try (PrintWriter clustersWriter = new PrintWriter(clustersOutFilename, "UTF-8")) {
+      for (int i = 0; i < clusters.size(); i++) {
+        Set<Integer> cluster = clusters.get(i);
+        StringBuffer strBuffer = new StringBuffer();
+        for (Integer id : cluster) {
+          strBuffer.append(id + ",");
+        }
+        strBuffer.replace(strBuffer.length() - 1, strBuffer.length(), "");
+        clustersWriter.println(strBuffer.toString());
+      }
+    }
+  }
+  
+  public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException,
+      Exception {
+    
+    String domain = args[0];
+    String reqIdsOutFilename = args[1];
+    String similarityOutFilename = args[2];
+    String clustersOutFilename = args[3];
+
+    try (RequirementsTagSimilarityComputer simComputer = new RequirementsTagSimilarityComputer()) {
+
+      Multimap<Integer, Integer> similarReqs = simComputer.computeTagSimilarity(domain,
+          reqIdsOutFilename, similarityOutFilename);
       
-      System.out.println(clusters);
+      simComputer.performNaiveClustering(similarReqs, clustersOutFilename);
     }
   }
 }
