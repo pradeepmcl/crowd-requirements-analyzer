@@ -12,6 +12,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import com.opencsv.CSVWriter;
@@ -55,6 +57,22 @@ public class RequirementsClustersReader implements AutoCloseable {
     return count;
   }
 
+  public void readMatlabClusters(String clustersInFilename, String reqIdsInFilename)
+      throws FileNotFoundException, IOException {
+    
+    List<Integer> reqIds = new ArrayList<Integer>();
+    try (BufferedReader reqIdsBr = new BufferedReader(new FileReader(reqIdsInFilename))) {
+      String line;
+      while ((line = reqIdsBr.readLine()) != null) {
+        reqIds.add(Integer.parseInt(line));
+      }
+    }
+    
+    try (BufferedReader clustersBr = new BufferedReader(new FileReader(clustersInFilename))) {
+      
+    }
+  }
+  
   public void writeNaiveClusteredReqs(String clustersInFilename, String reqsOutFilename)
       throws FileNotFoundException, IOException, SQLException {
 
