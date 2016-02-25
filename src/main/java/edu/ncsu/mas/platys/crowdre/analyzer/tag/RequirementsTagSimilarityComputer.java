@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.tag;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -29,7 +29,7 @@ public class RequirementsTagSimilarityComputer implements AutoCloseable {
 
   public RequirementsTagSimilarityComputer() throws ClassNotFoundException, SQLException,
       IOException {
-    try (InputStream inStream = RequirementsSpellCorrector.class
+    try (InputStream inStream = RequirementsTagSimilarityComputer.class
         .getResourceAsStream("/application.properties")) {
 
       mProps.load(inStream);

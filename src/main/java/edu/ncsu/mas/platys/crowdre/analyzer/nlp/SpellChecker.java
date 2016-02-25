@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util.nlp;
+package edu.ncsu.mas.platys.crowdre.analyzer.nlp;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;

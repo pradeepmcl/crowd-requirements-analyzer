@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.spell;
 
 import java.io.Console;
 import java.io.IOException;
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import edu.ncsu.mas.platys.crowdre.analyzer.util.nlp.SpellChecker;
+import edu.ncsu.mas.platys.crowdre.analyzer.nlp.SpellChecker;
 
 public class RequirementsSpellCorrector {
 

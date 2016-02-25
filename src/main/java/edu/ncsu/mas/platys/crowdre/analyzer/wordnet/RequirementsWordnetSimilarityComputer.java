@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.wordnet;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
-import edu.ncsu.mas.platys.crowdre.analyzer.util.nlp.WordnetSimilarityComputer;
+import edu.ncsu.mas.platys.crowdre.analyzer.nlp.WordnetSimilarityComputer;
 
 public class RequirementsWordnetSimilarityComputer {
   

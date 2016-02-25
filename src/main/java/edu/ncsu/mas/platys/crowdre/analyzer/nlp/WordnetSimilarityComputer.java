@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util.nlp;
+package edu.ncsu.mas.platys.crowdre.analyzer.nlp;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;

@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.nlp;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -16,8 +16,6 @@ import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
-import edu.ncsu.mas.platys.crowdre.analyzer.util.nlp.OpenNLPSingleton;
-
 public class RequirementsStemmer implements AutoCloseable {
 
   private final Properties mProps = new Properties();
@@ -31,7 +29,7 @@ public class RequirementsStemmer implements AutoCloseable {
   public RequirementsStemmer() throws ClassNotFoundException, SQLException,
       IOException {
     
-    try (InputStream inStream = RequirementsSpellCorrector.class
+    try (InputStream inStream = RequirementsStemmer.class
         .getResourceAsStream("/application.properties")) {
 
       mProps.load(inStream);

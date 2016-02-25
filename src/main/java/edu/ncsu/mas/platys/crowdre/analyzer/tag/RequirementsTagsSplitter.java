@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.tag;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,7 +22,7 @@ public class RequirementsTagsSplitter implements AutoCloseable {
   private final Connection mConn;
 
   public RequirementsTagsSplitter() throws ClassNotFoundException, SQLException, IOException {
-    try (InputStream inStream = RequirementsSpellCorrector.class
+    try (InputStream inStream = RequirementsTagsSplitter.class
         .getResourceAsStream("/application.properties")) {
 
       mProps.load(inStream);

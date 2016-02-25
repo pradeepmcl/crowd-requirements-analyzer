@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.cluster;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -26,7 +26,7 @@ public class RequirementsClustersReader implements AutoCloseable {
 
   public RequirementsClustersReader() throws ClassNotFoundException, SQLException,
       IOException {
-    try (InputStream inStream = RequirementsSpellCorrector.class
+    try (InputStream inStream = RequirementsClustersReader.class
         .getResourceAsStream("/application.properties")) {
 
       mProps.load(inStream);

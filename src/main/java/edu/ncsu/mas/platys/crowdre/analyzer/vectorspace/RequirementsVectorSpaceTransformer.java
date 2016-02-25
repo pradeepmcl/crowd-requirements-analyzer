@@ -1,4 +1,4 @@
-package edu.ncsu.mas.platys.crowdre.analyzer.util;
+package edu.ncsu.mas.platys.crowdre.analyzer.vectorspace;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -28,16 +28,13 @@ public class RequirementsVectorSpaceTransformer implements AutoCloseable {
   // For TF, count terms in each document
   private Table<Integer, String, Integer> docTermCounts = HashBasedTable.create();
 
-  // For IDF, count number of docs for each term
-  // private Map<String, Integer> termDocCounts = new HashMap<String, Integer>();
-
   // TF-IDF table
   private Table<Integer, String, Double> tfIdf = HashBasedTable.create();
 
   public RequirementsVectorSpaceTransformer() throws ClassNotFoundException, SQLException,
       IOException {
     
-    try (InputStream inStream = RequirementsSpellCorrector.class
+    try (InputStream inStream = RequirementsVectorSpaceTransformer.class
         .getResourceAsStream("/application.properties")) {
 
       mProps.load(inStream);
