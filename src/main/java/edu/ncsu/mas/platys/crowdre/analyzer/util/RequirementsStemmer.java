@@ -102,6 +102,7 @@ public class RequirementsStemmer implements AutoCloseable {
         
         for (int i = 2; i <= 5; i++) {
           String text = rs.getString(i).trim().toLowerCase();
+          text.replace("#", ""); // Some tags have #
 
           if (text.length() > 0) {
             String[] words = nlp.tokenize(text);
@@ -111,9 +112,14 @@ public class RequirementsStemmer implements AutoCloseable {
 
             StringBuffer stemmedWords = new StringBuffer();
             for (int j = 0; j < indicesToRetain.size(); j++) {
-              stemmedWords.append(nlp.porterStem(words[indicesToRetain.get(j)]).toString() + " ");
+              stemmedWords.append(nlp.porterStem(words[indicesToRetain.get(j)]).toString() + "|");
             }
-            pStmt.setString(i, stemmedWords.toString());
+            if (stemmedWords.length() > 0) { 
+              stemmedWords.replace(stemmedWords.length() - 1, stemmedWords.length(), "");
+              pStmt.setString(i, stemmedWords.toString());
+            } else {
+              pStmt.setString(i, null);
+            }
           } else {
             pStmt.setString(i, null);
           }
