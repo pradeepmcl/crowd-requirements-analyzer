@@ -13,7 +13,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import com.opencsv.CSVWriter;
@@ -56,36 +58,17 @@ public class RequirementsClustersReader implements AutoCloseable {
     }
     return count;
   }
-
-  public void readMatlabClusters(String clustersInFilename, String reqIdsInFilename)
-      throws FileNotFoundException, IOException {
-    
-    List<Integer> reqIds = new ArrayList<Integer>();
-    try (BufferedReader reqIdsBr = new BufferedReader(new FileReader(reqIdsInFilename))) {
-      String line;
-      while ((line = reqIdsBr.readLine()) != null) {
-        reqIds.add(Integer.parseInt(line));
-      }
-    }
-    
-    try (BufferedReader clustersBr = new BufferedReader(new FileReader(clustersInFilename))) {
-      
-    }
-  }
   
-  public void writeNaiveClusteredReqs(String clustersInFilename, String reqsOutFilename)
+  public void writeClusteredReqs(List<String> clusters, String reqsOutFilename)
       throws FileNotFoundException, IOException, SQLException {
 
     String reqsSelect = "select id, user_id, role, feature, benefit, tags"
         + " from requirements where id in (#ids#)";
 
-    try (BufferedReader clustersBr = new BufferedReader(new FileReader(clustersInFilename));
-        CSVWriter reqsWriter = new CSVWriter(new FileWriter(reqsOutFilename));
+    try (CSVWriter reqsWriter = new CSVWriter(new FileWriter(reqsOutFilename));
         Statement stmt = mConn.createStatement();) {
-
-      String line;
-      while ((line = clustersBr.readLine()) != null) {
-        String prepdReqsSelect = reqsSelect.replace("#ids#", line);
+      for (String cluster : clusters) {
+        String prepdReqsSelect = reqsSelect.replace("#ids#", cluster);
         try (ResultSet rs = stmt.executeQuery(prepdReqsSelect)) {
           /*while (rs.next()) {
             reqsWriter.println(rs.getInt(1) + "," + rs.getInt(2) + "," + rs.getString(3) + ","
@@ -98,19 +81,68 @@ public class RequirementsClustersReader implements AutoCloseable {
     }
   }
   
-  public static void main(String[] args) throws ClassNotFoundException, SQLException, IOException,
-      Exception {
+  private List<String> readNaiveClusters(String clustersInFilename)
+      throws FileNotFoundException, IOException {
+    List<String> clusters = new ArrayList<String>();
+    try (BufferedReader clustersBr = new BufferedReader(new FileReader(clustersInFilename))) {
+      String line;
+      while ((line = clustersBr.readLine()) != null) {
+        clusters.add(line);
+      }
+    }
+    return clusters;
+  }
+  
+  private List<String> readMatlabClusters(String clustersInFilename, String reqIdsInFilename)
+      throws FileNotFoundException, IOException {
     
-    String clustersSource = args[0];
+    List<Integer> reqIds = new ArrayList<Integer>();
+    try (BufferedReader reqIdsBr = new BufferedReader(new FileReader(reqIdsInFilename))) {
+      String line;
+      while ((line = reqIdsBr.readLine()) != null) {
+        reqIds.add(Integer.parseInt(line));
+      }
+    }
+
+    Map<Integer, String> clusterIdTOReqIds = new HashMap<Integer, String>();
+    try (BufferedReader clustersBr = new BufferedReader(new FileReader(clustersInFilename))) {
+      String line;
+      int i = 0;
+      while ((line = clustersBr.readLine()) != null) {
+        Integer clusterId = Integer.parseInt(line);
+        
+        String ids = clusterIdTOReqIds.get(clusterId);
+        if (ids == null) {
+          clusterIdTOReqIds.put(clusterId, reqIds.get(i).toString());
+        } else {
+          clusterIdTOReqIds.put(clusterId, ids + "," + reqIds.get(i));
+        }
+        
+        i++;
+      }
+    }
+    
+    List<String> clusters = new ArrayList<String>();
+    clusters.addAll(clusterIdTOReqIds.values());
+    return clusters;
+  }
+  
+  public static void main(String[] args)
+      throws ClassNotFoundException, SQLException, IOException, Exception {
+
+    String clustersInFileFormat = args[0];
     String clustersInFilename = args[1];
     String reqsOutFilename = args[2];
 
     try (RequirementsClustersReader clusterReader = new RequirementsClustersReader()) {
-      if (clustersSource.equals("naive")) {
-        clusterReader.writeNaiveClusteredReqs(clustersInFilename, reqsOutFilename);
-      } else if (clustersSource.equals("matlab")) {
-        // String reqIdsInFilename = args[3];
-        // TODO
+      if (clustersInFileFormat.equals("naive")) {
+        List<String> clusters = clusterReader.readNaiveClusters(clustersInFilename);
+        clusterReader.writeClusteredReqs(clusters, reqsOutFilename);
+      } else if (clustersInFileFormat.equals("matlab")) {
+        String reqIdsInFilename = args[3];
+        List<String> clusters = clusterReader.readMatlabClusters(clustersInFilename,
+            reqIdsInFilename);
+        clusterReader.writeClusteredReqs(clusters, reqsOutFilename);
       }
     }
   }
