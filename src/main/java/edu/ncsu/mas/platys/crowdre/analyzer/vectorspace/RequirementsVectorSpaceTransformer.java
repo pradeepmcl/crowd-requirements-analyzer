@@ -100,12 +100,12 @@ public class RequirementsVectorSpaceTransformer implements AutoCloseable {
     
     try (PrintWriter writer = new PrintWriter(outFilename, "UTF-8")) {
       // Write terms on the first line
-      StringBuffer terms = new StringBuffer();
+      /* StringBuffer terms = new StringBuffer();
       for (String term : tfIdf.columnKeySet()) {
         terms.append(term + "|");
       }
       terms.replace(terms.length() - 1, terms.length(), "");
-      writer.println(terms);
+      writer.println(terms);*/
       
       // Write frequencies on the following lines
       for (Integer reqId : tfIdf.rowKeySet()) {
