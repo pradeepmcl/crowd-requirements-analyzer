@@ -1,6 +1,5 @@
 package edu.ncsu.mas.platys.crowdre.analyzer.util;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -8,7 +7,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -19,17 +20,17 @@ public class PersonalityComputer {
       + " from personality_questions_users where user_id = ?";
 
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
-    int phase = Integer.parseInt(args[0]);
-    
     Properties props = new Properties();
-    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties")) {
+    try (InputStream inStream = PersonalityComputer.class
+        .getResourceAsStream("/application.properties")) {
+
       props.load(inStream);
       Class.forName(props.getProperty("jdbc.driverClassName"));
 
       try (Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
           + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"))) {
 
-        Set<Integer> idSet = MTurkIdFilter.getMturkIds(conn, phase, true);
+        Set<Integer> idSet = getUserIds(conn);
         Map<Integer, Double[]> idToTraits = new HashMap<Integer, Double[]>();
 
         System.out.println("id,E,A,C,N,I");
@@ -39,17 +40,29 @@ public class PersonalityComputer {
           System.out.println(id + "," + traits[0] + "," + traits[1] + "," + traits[2] + ","
               + traits[3] + "," + traits[4]);
         }
-        
+
         System.out.println("Distances for the first id...");
         for (int id1 : idSet) {
           for (int id2 : idSet) {
             System.out.print(getPersonalityEuclideanDistance(idToTraits.get(id1),
-                idToTraits.get(id2)) + " ");
+                idToTraits.get(id2))
+                + " ");
           }
           break; // One iteration is sufficient for testing
         }
       }
     }
+  }
+
+  public static Set<Integer> getUserIds(Connection conn) throws SQLException {
+    Set<Integer> idSet = new HashSet<Integer>();
+    String query = "select distinct user_id from personality_questions_users";
+    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
+      while (rs.next()) {
+        idSet.add(rs.getInt(1));
+      }
+    }
+    return idSet;
   }
 
   public static Double[] computePeronalityTraits(Connection conn, int userId) throws SQLException {
@@ -90,7 +103,7 @@ public class PersonalityComputer {
 
     return traits;
   }
-  
+
   public static Double getPersonalityEuclideanDistance(Double[] trait1, Double[] trait2) {
     Double squaredDistance = 0.0;
     for (int i = 0; i < 5; i++) {

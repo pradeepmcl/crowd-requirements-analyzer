@@ -1,6 +1,5 @@
 package edu.ncsu.mas.platys.crowdre.analyzer.util;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
@@ -8,7 +7,9 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -23,7 +24,6 @@ public class CreativityComputer {
   private static final String positiveAttributeStr = "0,2,4,5,7,9,11,13,16,18,19,20,22,24,25,26,28,29";
 
   public static void main(String[] args) throws SQLException, IOException, ClassNotFoundException {
-    int phase = Integer.parseInt(args[0]);
 
     String[] positiveIndices = positiveAttributeStr.split(",");
     for (String positiveIndex : positiveIndices) {
@@ -31,14 +31,16 @@ public class CreativityComputer {
     }
 
     Properties props = new Properties();
-    try (InputStream inStream = new FileInputStream("src/main/resources/application.properties")) {
+    try (InputStream inStream = CreativityComputer.class
+        .getResourceAsStream("/application.properties")) {
+
       props.load(inStream);
       Class.forName(props.getProperty("jdbc.driverClassName"));
 
       try (Connection conn = DriverManager.getConnection(props.getProperty("jdbc.url") + "?user="
           + props.getProperty("jdbc.username") + "&password=" + props.getProperty("jdbc.password"))) {
 
-        Set<Integer> idSet = MTurkIdFilter.getMturkIds(conn, phase, true);
+        Set<Integer> idSet = getUserIds(conn);
         Map<Integer, Double> idToCreativityScore = new HashMap<Integer, Double>();
 
         System.out.println("id,Creativity");
@@ -51,6 +53,17 @@ public class CreativityComputer {
     }
   }
 
+  public static Set<Integer> getUserIds(Connection conn) throws SQLException {
+    Set<Integer> idSet = new HashSet<Integer>();
+    String query = "select distinct user_id from creativity_questions_users";
+    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
+      while (rs.next()) {
+        idSet.add(rs.getInt(1));
+      }
+    }
+    return idSet;
+  }
+  
   public static Double computeCreativityScore(Connection conn, int userId) throws SQLException {
     Double creativityScore;
     try (PreparedStatement prepdStmt = conn.prepareStatement(CREATIVITY_SQL)) {
