@@ -61,6 +61,17 @@ public class CreativityComputer {
         idSet.add(rs.getInt(1));
       }
     }
+    
+    Set<Integer> idSet2 = new HashSet<Integer>();
+    String query2 = "select id from users where completion_code is not null";
+    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query2)) {
+      while (rs.next()) {
+        idSet2.add(rs.getInt(1));
+      }
+    }
+
+    idSet.retainAll(idSet2);
+
     return idSet;
   }
   
@@ -96,7 +107,7 @@ public class CreativityComputer {
     }
 
     for (int i = 0; i < 30; i++) {
-      creativityScore += positiveAttribute[i] ? rawScores[i] : (5 - rawScores[i]);
+      creativityScore += positiveAttribute[i] ? rawScores[i] : (6 - rawScores[i]);
     }
 
     return (creativityScore / 30);

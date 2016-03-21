@@ -55,14 +55,24 @@ public class PersonalityComputer {
   }
 
   public static Set<Integer> getUserIds(Connection conn) throws SQLException {
-    Set<Integer> idSet = new HashSet<Integer>();
-    String query = "select distinct user_id from personality_questions_users";
-    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query)) {
+    Set<Integer> idSet1 = new HashSet<Integer>();
+    String query1 = "select distinct user_id from personality_questions_users";
+    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query1)) {
       while (rs.next()) {
-        idSet.add(rs.getInt(1));
+        idSet1.add(rs.getInt(1));
       }
     }
-    return idSet;
+    
+    Set<Integer> idSet2 = new HashSet<Integer>();
+    String query2 = "select id from users where completion_code is not null";
+    try (Statement stmt = conn.createStatement(); ResultSet rs = stmt.executeQuery(query2)) {
+      while (rs.next()) {
+        idSet2.add(rs.getInt(1));
+      }
+    }
+
+    idSet1.retainAll(idSet2);
+    return idSet1;
   }
 
   public static Double[] computePeronalityTraits(Connection conn, int userId) throws SQLException {
@@ -97,8 +107,8 @@ public class PersonalityComputer {
     }
 
     for (int i = 0; i < 5; i++) {
-      traits[i] = (personalityScores[i].doubleValue() + (5 - personalityScores[i + 5])
-          + personalityScores[i + 10] + (5 - personalityScores[i + 15])) / 4;
+      traits[i] = (personalityScores[i].doubleValue() + (6 - personalityScores[i + 5])
+          + personalityScores[i + 10] + (6 - personalityScores[i + 15])) / 4;
     }
 
     return traits;
